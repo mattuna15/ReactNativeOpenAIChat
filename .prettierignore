@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+
+# iOS
+ios/
+android/
+
+# Metro
+.metro-health-check*
+
+# Generated files
+*.generated.*
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# OS generated files
+.DS_Store
