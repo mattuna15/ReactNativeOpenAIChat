@@ -11,6 +11,8 @@ export const DEBUG: boolean = (() => {
 })();
 
 export const logDebug = (...args: unknown[]) => {
+  // Silence logs during unit tests
+  if (process.env.NODE_ENV === 'test') return;
   if (DEBUG) {
     // eslint-disable-next-line no-console
     console.log('[DEBUG]', ...args);
@@ -18,6 +20,8 @@ export const logDebug = (...args: unknown[]) => {
 };
 
 export const errorDebug = (...args: unknown[]) => {
+  // Silence logs during unit tests
+  if (process.env.NODE_ENV === 'test') return;
   if (DEBUG) {
     // eslint-disable-next-line no-console
     console.error('[DEBUG]', ...args);

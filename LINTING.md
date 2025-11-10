@@ -154,9 +154,7 @@ Consider:
 // In styles file
 const dynamicStyles = (isDarkMode: boolean) => ({
   container: {
-    backgroundColor: isDarkMode
-      ? colors.dark.background
-      : colors.light.background,
+    backgroundColor: isDarkMode ? colors.dark.background : colors.light.background,
   },
 });
 ```

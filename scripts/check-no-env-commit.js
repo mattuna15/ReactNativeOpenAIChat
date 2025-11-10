@@ -6,10 +6,10 @@ try {
   const staged = execSync('git diff --cached --name-only', {
     encoding: 'utf8',
   });
-  if (staged.split(/[\r\n]+/).some(f => f.trim() === '.env')) {
+  if (staged.split(/[\r\n]+/).some((f) => f.trim() === '.env')) {
     console.error('\n[pre-commit] ERROR: .env is staged for commit.');
     console.error(
-      'Please remove .env from the commit (git reset HEAD .env) and ensure .env is in .gitignore.',
+      'Please remove .env from the commit (git reset HEAD .env) and ensure .env is in .gitignore.'
     );
     process.exit(1);
   }

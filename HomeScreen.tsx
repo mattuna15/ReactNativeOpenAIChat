@@ -15,30 +15,39 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from './App';
 import { createHomeScreenDynamicStyles } from './HomeScreenDynamicStyles';
 import { homeScreenStyles } from './HomeScreenStyles';
 import { colors } from './colors';
-import { errorDebug, logDebug } from './config';
+import { logDebug } from './config';
+import { callOpenAI } from './openai';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
+  // Optional testing hook: provide a ref object for ScrollView so tests can spy on scrollTo
+  scrollRefProp?: React.RefObject<ScrollView>;
+  // For tests only: initialize the loading state
+  testInitialLoading?: boolean;
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({
+  navigation,
+  scrollRefProp,
+  testInitialLoading,
+}) => {
   const [text, setText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(Boolean(testInitialLoading));
   const safeAreaInsets = useSafeAreaInsets();
   const isDarkMode = useColorScheme() === 'dark';
   const dynamicStyles = createHomeScreenDynamicStyles(isDarkMode);
   const scrollRef = useRef<ScrollView>(null);
   const [inputY, setInputY] = useState<number | null>(null);
+  const isMountedRef = useRef(true);
+  // Use injected ref in tests when provided
+  const effectiveScrollRef = (scrollRefProp ?? scrollRef) as React.RefObject<ScrollView>;
 
   // Log whether the API key is present on mount so we can verify Metro logs are visible
   useEffect(() => {
@@ -47,9 +56,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   useEffect(() => {
     const onKeyboardShow = () => {
-      if (inputY != null && scrollRef.current) {
+      if (inputY != null && effectiveScrollRef.current) {
         // scroll so the input is visible when keyboard opens
-        scrollRef.current.scrollTo({
+        effectiveScrollRef.current.scrollTo({
           y: Math.max(inputY - 20, 0),
           animated: true,
         });
@@ -60,58 +69,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     return () => {
       showSub.remove();
+      isMountedRef.current = false;
     };
-  }, [inputY]);
-
-  const callOpenAI = async (prompt: string): Promise<string> => {
-    try {
-      const payload = {
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 500,
-        temperature: 0.7,
-      };
-
-      logDebug('[OpenAI] Request payload:', payload);
-
-      const response = await fetch(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      logDebug('[OpenAI] Response status:', response.status);
-
-      const bodyText = await response.text();
-      try {
-        const data = JSON.parse(bodyText);
-        logDebug('[OpenAI] Response body (json):', data);
-        if (!response.ok) {
-          throw new Error(
-            `HTTP error! status: ${response.status} - ${JSON.stringify(data)}`,
-          );
-        }
-        return data.choices[0].message.content;
-      } catch (jsonErr) {
-        logDebug('[OpenAI] Response body (text):', bodyText);
-        if (!response.ok) {
-          throw new Error(
-            `HTTP error! status: ${response.status} - ${bodyText}`,
-          );
-        }
-        throw jsonErr;
-      }
-    } catch (err) {
-      errorDebug('[OpenAI] API call failed', err);
-      throw new Error('Failed to get response from OpenAI');
-    }
-  };
+  }, [inputY, effectiveScrollRef]);
 
   const handleSubmit = async () => {
     if (!text.trim()) {
@@ -120,10 +80,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
 
     if (!OPENAI_API_KEY) {
-      Alert.alert(
-        'Configuration Error',
-        'Please set your OpenAI API key in the .env file',
-      );
+      Alert.alert('Configuration Error', 'Please set your OpenAI API key in the .env file');
       return;
     }
 
@@ -134,16 +91,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         response,
         prompt: text.trim(),
       });
-      setText(''); // Clear the input
+      if (isMountedRef.current) setText(''); // Clear the input
     } catch (error) {
       Alert.alert(
         'Error',
         `Failed to get response from OpenAI: ${
           error instanceof Error ? error.message : 'Unknown error'
-        }. Please check your API key and try again.`,
+        }. Please check your API key and try again.`
       );
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
     }
   };
 
@@ -152,37 +109,33 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       <KeyboardAvoidingView
         style={homeScreenStyles.keyboardAvoiding}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={
-          Platform.OS === 'ios' ? safeAreaInsets.top + 44 : 20
-        }
+        keyboardVerticalOffset={Platform.OS === 'ios' ? safeAreaInsets.top + 44 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={homeScreenStyles.screenInner}>
             <ScrollView
-              ref={scrollRef}
+              testID="home-scrollview"
+              // prefer the injected ref prop for tests, fall back to internal ref
+              ref={effectiveScrollRef as unknown as React.Ref<ScrollView>}
               contentContainerStyle={homeScreenStyles.content}
               keyboardShouldPersistTaps="handled"
             >
-              <Text style={[homeScreenStyles.title, dynamicStyles.title]}>
-                AI Chat Assistant
-              </Text>
+              <Text style={[homeScreenStyles.title, dynamicStyles.title]}>AI Chat Assistant</Text>
 
               <TextInput
                 style={[homeScreenStyles.textInput, dynamicStyles.textInput]}
                 placeholder="Ask me anything..."
                 placeholderTextColor={
-                  isDarkMode
-                    ? colors.dark.placeholder
-                    : colors.light.placeholder
+                  isDarkMode ? colors.dark.placeholder : colors.light.placeholder
                 }
                 value={text}
                 onChangeText={setText}
                 multiline={true}
                 textAlignVertical="top"
-                onLayout={e => setInputY(e.nativeEvent.layout.y)}
+                onLayout={(e) => setInputY(e.nativeEvent.layout.y)}
                 onFocus={() => {
-                  if (inputY != null && scrollRef.current) {
-                    scrollRef.current?.scrollTo({
+                  if (inputY != null && effectiveScrollRef.current) {
+                    effectiveScrollRef.current?.scrollTo({
                       y: Math.max(inputY - 20, 0),
                       animated: true,
                     });
@@ -191,10 +144,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               />
 
               <TouchableOpacity
-                style={[
-                  homeScreenStyles.button,
-                  isLoading ? dynamicStyles.buttonDisabled : null,
-                ]}
+                testID="submit-button"
+                style={[homeScreenStyles.button, isLoading ? dynamicStyles.buttonDisabled : null]}
                 onPress={handleSubmit}
                 disabled={isLoading}
               >
@@ -206,11 +157,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </TouchableOpacity>
             </ScrollView>
             {isLoading && (
-              <View
-                style={homeScreenStyles.loadingOverlay}
-                pointerEvents="auto"
-              >
-                <ActivityIndicator size="large" color="#fff" />
+              <View style={homeScreenStyles.loadingOverlay} pointerEvents="auto">
+                <ActivityIndicator testID="loading-indicator" size="large" color="#fff" />
               </View>
             )}
           </View>

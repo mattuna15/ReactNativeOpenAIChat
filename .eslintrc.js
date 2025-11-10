@@ -1,8 +1,8 @@
 module.exports = {
   root: true,
-  extends: ['@react-native'],
+  extends: ['@react-native', 'plugin:prettier/recommended', 'prettier'],
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'react', 'react-native', 'react-hooks'],
+  plugins: ['@typescript-eslint', 'react', 'react-native', 'react-hooks', 'prettier'],
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
@@ -11,6 +11,8 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    // Prettier integration: report Prettier formatting issues as ESLint errors
+    'prettier/prettier': ['error'],
     // TypeScript specific rules
     '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/no-explicit-any': 'warn',
@@ -48,7 +50,8 @@ module.exports = {
     // Style and formatting rules
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
-    'comma-dangle': ['error', 'always-multiline'],
+    // Let Prettier handle comma-dangle and other formatting concerns
+    'comma-dangle': 'off',
     indent: ['error', 2],
     'eol-last': 'error',
     'no-trailing-spaces': 'error',

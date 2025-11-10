@@ -40,12 +40,8 @@ export const getThemeColors = (isDark: boolean) => ({
   background: isDark ? colors.dark.background : colors.light.background,
   surface: isDark ? colors.dark.surface : colors.light.surface,
   text: isDark ? colors.dark.text : colors.light.text,
-  textSecondary: isDark
-    ? colors.dark.textSecondary
-    : colors.light.textSecondary,
+  textSecondary: isDark ? colors.dark.textSecondary : colors.light.textSecondary,
   border: isDark ? colors.dark.border : colors.light.border,
-  borderSecondary: isDark
-    ? colors.dark.borderSecondary
-    : colors.light.borderSecondary,
+  borderSecondary: isDark ? colors.dark.borderSecondary : colors.light.borderSecondary,
   placeholder: isDark ? colors.dark.placeholder : colors.light.placeholder,
 });
