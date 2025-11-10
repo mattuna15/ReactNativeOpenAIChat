@@ -98,3 +98,20 @@ npm run lint
 ---
 
 If you'd like, I can update the README further to include screenshots or step-by-step troubleshooting for iOS/Android build errors.
+
+
+## Troubleshooting: GUI Git clients
+
+If GUI Git clients (like GitHub Desktop) fail Husky hooks with `npx: command not
+found`, the GUI's Git process may not inherit your shell PATH. Two quick
+fixes:
+
+- Use System Git in GitHub Desktop: Preferences → Git → Use System Git.
+- Install Node globally (Homebrew on macOS): `brew install node`.
+
+Temporary workaround: commit from a terminal, or use `git commit --no-verify`
+to bypass hooks (not recommended long-term).
+
+Note: I updated the Husky pre-commit hook to run `npm run -s lint-staged` which
+is more robust in some GUI environments.
+
