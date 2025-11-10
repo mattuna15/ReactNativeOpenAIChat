@@ -37,15 +37,9 @@ function findKey() {
 }
 
 const key = findKey();
-if (
-  !key ||
-  key.length < MIN_KEY_LENGTH ||
-  key.includes('your-actual-api-key')
-) {
+if (!key || key.length < MIN_KEY_LENGTH || key.includes('your-actual-api-key')) {
   console.error('\n[validate-env] ERROR: Missing or invalid OPENAI_API_KEY.');
-  console.error(
-    'Please add a valid OPENAI_API_KEY to your .env file or environment variables.',
-  );
+  console.error('Please add a valid OPENAI_API_KEY to your .env file or environment variables.');
   console.error('Example in .env:');
   console.error('OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n');
   process.exit(1);

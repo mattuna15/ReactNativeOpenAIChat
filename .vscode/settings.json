@@ -1,18 +1,13 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit"
+    "source.fixAll.eslint": true,
+    "source.organizeImportsys": true
   },
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ],
-  "typescript.preferences.organizeImportsCollation": "ordinal",
-  "typescript.preferences.organizeImportsIgnoreCase": true,
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.eol": "\n",
+  "json.schemaDownload.enable": false,
   "files.associations": {
     "*.json": "jsonc"
   },
@@ -27,5 +22,7 @@
     "ios/build": true,
     "android/build": true,
     "**/*.generated.*": true
-  }
+  },
+  "typescript.preferences.organizeImportsCollation": "ordinal",
+  "typescript.preferences.organizeImportsIgnoreCase": true
 }

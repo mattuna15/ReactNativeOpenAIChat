@@ -6,11 +6,7 @@
 
 function getEnvKey(): string {
   // Prefer the standard Node-style environment variable if present.
-  if (
-    typeof process !== 'undefined' &&
-    process.env &&
-    process.env.OPENAI_API_KEY
-  ) {
+  if (typeof process !== 'undefined' && process.env && process.env.OPENAI_API_KEY) {
     return process.env.OPENAI_API_KEY as string;
   }
 
