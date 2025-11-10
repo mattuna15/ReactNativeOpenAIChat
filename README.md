@@ -95,11 +95,6 @@ npm run lint
 - Show token usage on the Results screen
 - Add an in-app debug toggle to enable logging at runtime (no rebuild required)
 
----
-
-If you'd like, I can update the README further to include screenshots or step-by-step troubleshooting for iOS/Android build errors.
-
-
 ## Troubleshooting: GUI Git clients
 
 If GUI Git clients (like GitHub Desktop) fail Husky hooks with `npx: command not
