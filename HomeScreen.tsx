@@ -69,9 +69,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
     return () => {
       showSub.remove();
-      isMountedRef.current = false;
     };
   }, [inputY, effectiveScrollRef]);
+
+  // Track mounted state separately so it only flips on unmount.
+  useEffect(() => {
+    // already true by initialization
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Clear loading if the screen regains focus (e.g., user navigated back).
+  useEffect(() => {
+    if (navigation && typeof (navigation as any).addListener === 'function') {
+      const unsubscribe = (navigation as any).addListener('focus', () => {
+        setIsLoading(false);
+      });
+      // navigation.addListener returns an unsubscribe function
+      return unsubscribe;
+    }
+    return undefined;
+  }, [navigation]);
 
   const handleSubmit = async () => {
     if (!text.trim()) {
