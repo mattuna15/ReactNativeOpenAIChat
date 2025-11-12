@@ -1,4 +1,3 @@
-import { OPENAI_API_KEY } from '@env';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -21,6 +20,7 @@ import { createHomeScreenDynamicStyles } from './HomeScreenDynamicStyles';
 import { homeScreenStyles } from './HomeScreenStyles';
 import { colors } from './colors';
 import { logDebug } from './config';
+import { getOpenAIApiKey } from './environment';
 import { callOpenAI } from './openai';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
@@ -46,12 +46,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const scrollRef = useRef<ScrollView>(null);
   const [inputY, setInputY] = useState<number | null>(null);
   const isMountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
   // Use injected ref in tests when provided
   const effectiveScrollRef = (scrollRefProp ?? scrollRef) as React.RefObject<ScrollView>;
 
   // Log whether the API key is present on mount so we can verify Metro logs are visible
   useEffect(() => {
-    logDebug('[Startup] OPENAI_API_KEY present:', Boolean(OPENAI_API_KEY));
+    logDebug('[Startup] OPENAI_API_KEY present:', Boolean(getOpenAIApiKey()));
   }, []);
 
   useEffect(() => {
@@ -77,6 +78,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     // already true by initialization
     return () => {
       isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
     };
   }, []);
 
@@ -98,20 +103,42 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       return;
     }
 
-    if (!OPENAI_API_KEY) {
+    const apiKey = getOpenAIApiKey();
+    if (!apiKey) {
       Alert.alert('Configuration Error', 'Please set your OpenAI API key in the .env file');
       return;
     }
 
+    // Cancel any in-flight request before starting a new one.
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     setIsLoading(true);
+
+    let controller: AbortController | null = null;
     try {
-      const response = await callOpenAI(text.trim());
+      if (typeof AbortController !== 'undefined') {
+        controller = new AbortController();
+        abortControllerRef.current = controller;
+      } else {
+        abortControllerRef.current = null;
+      }
+
+      const response = await callOpenAI(
+        text.trim(),
+        controller ? { signal: controller.signal } : undefined
+      );
       navigation.navigate('Results', {
         response,
         prompt: text.trim(),
       });
       if (isMountedRef.current) setText(''); // Clear the input
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        logDebug('[HomeScreen] OpenAI request aborted');
+        return;
+      }
       Alert.alert(
         'Error',
         `Failed to get response from OpenAI: ${
@@ -119,6 +146,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         }. Please check your API key and try again.`
       );
     } finally {
+      if (controller && abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
       if (isMountedRef.current) setIsLoading(false);
     }
   };

@@ -28,6 +28,9 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ route, navigation }) => {
         dynamicStyles.container,
         {
           paddingTop: safeAreaInsets.top,
+          paddingBottom: safeAreaInsets.bottom,
+          paddingLeft: safeAreaInsets.left,
+          paddingRight: safeAreaInsets.right,
         },
       ]}
     >
@@ -38,7 +41,11 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ route, navigation }) => {
         <Text style={[resultsScreenStyles.title, dynamicStyles.title]}>AI Response</Text>
       </View>
 
-      <ScrollView style={resultsScreenStyles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={resultsScreenStyles.content}
+        contentContainerStyle={{ paddingBottom: safeAreaInsets.bottom + 20 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={[resultsScreenStyles.promptCard, dynamicStyles.promptCard]}>
           <Text style={[resultsScreenStyles.cardTitle, dynamicStyles.cardTitle]}>Your Prompt:</Text>
           <Text style={[resultsScreenStyles.promptText, dynamicStyles.promptText]}>{prompt}</Text>

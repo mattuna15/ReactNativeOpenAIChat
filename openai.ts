@@ -1,7 +1,16 @@
-import { OPENAI_API_KEY } from '@env';
 import { errorDebug, logDebug } from './config';
+import { getOpenAIApiKey } from './environment';
 
-export async function callOpenAI(prompt: string): Promise<string> {
+interface CallOpenAIOptions {
+  signal?: AbortSignal;
+}
+
+export async function callOpenAI(prompt: string, options: CallOpenAIOptions = {}): Promise<string> {
+  const apiKey = getOpenAIApiKey();
+  if (!apiKey) {
+    throw new Error('OpenAI API key is not configured');
+  }
+
   try {
     const payload = {
       model: 'gpt-3.5-turbo',
@@ -16,9 +25,10 @@ export async function callOpenAI(prompt: string): Promise<string> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(payload),
+      signal: options.signal,
     });
 
     logDebug('[OpenAI] Response status:', response.status);
@@ -40,6 +50,9 @@ export async function callOpenAI(prompt: string): Promise<string> {
     }
   } catch (err) {
     errorDebug('[OpenAI] API call failed', err);
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw err;
+    }
     throw new Error('Failed to get response from OpenAI');
   }
 }
