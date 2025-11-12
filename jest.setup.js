@@ -20,3 +20,6 @@ afterEach(() => {
   // Clear any remaining mock state
   jest.clearAllMocks();
 });
+
+// Provide a default API key during tests so guard clauses treating it as required pass.
+process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'sk-test';
